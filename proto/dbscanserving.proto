@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package dbscanserving;
+
+enum Metric {
+    EUCLIDEAN = 0;
+}
+
+message ModelSpec {
+    float eps = 1;
+    int32 min_samples = 2;
+    Metric metric = 3;
+}
+
+message Sample {
+    repeated float features = 1;
+}
+
+message DetectionRequest {
+    ModelSpec model_spec = 1;
+    repeated int32 dimensions = 2;
+    repeated Sample samples = 3;
+}
+
+message DetectionResponse {
+    repeated int32 cluster_indices = 1;
+}
+
+service Detector {
+    rpc Detect (DetectionRequest) returns (DetectionResponse);
+}
