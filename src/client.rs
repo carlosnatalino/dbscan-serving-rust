@@ -1,48 +1,68 @@
+mod dbscanserving;
 use dbscanserving::detector_client::DetectorClient;
-use dbscanserving::{Metric, ModelSpec, Sample, DetectionRequest};
+use dbscanserving::{Metric, Sample, DetectionRequest};
 
-
-pub mod dbscanserving {
-    tonic::include_proto!("dbscanserving");
-}
+use rand::Rng;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut rng = rand::thread_rng();
+
     let mut client = DetectorClient::connect("http://[::1]:50051").await?;
-
-    let mut model_spec = ModelSpec::default();
-    model_spec.eps = 3.5;
-    model_spec.min_samples = 30;
-    model_spec.metric = Metric::Euclidean as i32;
-
-    let mut samples: Vec<Sample> = Vec::new();
-    let mut sample1 = Sample::default();
-    sample1.features = vec![10., 11., 12.5, 45.4];
-    samples.push(sample1);
-
-    let mut sample2 = Sample::default();
-    sample2.features = vec![10., 11., 12.5, 45.4];
-    samples.push(sample2);
-
-    let request = tonic::Request::new(DetectionRequest {
-        model_spec: Some(model_spec),
-        dimensions: vec![2, 30],
-        samples: samples,
-    });
-
-    
 
     let now = std::time::Instant::now();
 
-    let response = client.detect(request).await?;
+    // let response = client.detect(request).await?;
 
-    // for i in 1..20 {
-    //     response = client.detect(request).await?;
-    // }
+    for _ in 1i32..200 {
+        let mut samples: Vec<Sample> = Vec::new();
 
-    println!("RESPONSE={:?}", response);
+        for _ in 0..200 {
+            let mut sample1 = Sample::default();
+            sample1.id = 1;
+            let mut vec = Vec::<f32>::new();
+            for _ in 0..100 {
+                vec.push(rng.gen_range(0.0..10.0));
+            }
+            sample1.features = vec;
+            samples.push(sample1);
+        }
 
-    println!("Time: {}", now.elapsed().as_secs());
+        for _ in 0..100 {
+            let mut sample1 = Sample::default();
+            sample1.id = 1;
+            let mut vec = Vec::<f32>::new();
+            for _ in 0..100 {
+                vec.push(rng.gen_range(50.0..60.0));
+            }
+            sample1.features = vec;
+            samples.push(sample1);
+        }
+
+        for _ in 0..10 {
+            let mut sample1 = Sample::default();
+            sample1.id = 1;
+            let mut vec = Vec::<f32>::new();
+            for _ in 0..100 {
+                vec.push(rng.gen_range(100000.0..20000000000.0));
+            }
+            sample1.features = vec;
+            samples.push(sample1);
+        }
+
+        let request = tonic::Request::new(DetectionRequest {
+            eps: 100.5,
+            min_samples: 50,
+            metric: Metric::Euclidean as i32,
+            dimensions: vec![2, 30],
+            samples: samples,
+        });
+        let response = client.detect(request).await?;
+        // println!("RESPONSE={:?}", response);
+        // println!("Length: {}", response.into_inner().cluster_indices.len());
+    }
+
+    println!("Time: {}", now.elapsed().as_millis());
 
     Ok(())
 

@@ -6,20 +6,17 @@ enum Metric {
     EUCLIDEAN = 0;
 }
 
-message ModelSpec {
-    float eps = 1;
-    int32 min_samples = 2;
-    Metric metric = 3;
-}
-
 message Sample {
-    repeated float features = 1;
+    int32 id = 1;
+    repeated float features = 2;
 }
 
 message DetectionRequest {
-    ModelSpec model_spec = 1;
-    repeated int32 dimensions = 2;
-    repeated Sample samples = 3;
+    float eps = 1;
+    int32 min_samples = 2;
+    Metric metric = 3;
+    repeated int32 dimensions = 4;
+    repeated Sample samples = 5;
 }
 
 message DetectionResponse {
