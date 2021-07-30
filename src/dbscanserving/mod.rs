@@ -1,4 +1,3 @@
-
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Sample {
     #[prost(int32, tag = "1")]
@@ -38,7 +37,7 @@ pub mod detector_client {
         inner: tonic::client::Grpc<T>,
     }
     impl DetectorClient<tonic::transport::Channel> {
-        #[doc = r" Attempt to create a new client by connecting to a given endpoint."]
+        /// Attempt to create a new client by connecting to a given endpoint.
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
             D: std::convert::TryInto<tonic::transport::Endpoint>,
@@ -76,15 +75,16 @@ pub mod detector_client {
         {
             DetectorClient::new(InterceptedService::new(inner, interceptor))
         }
-        #[doc = r" Compress requests with `gzip`."]
-        #[doc = r""]
-        #[doc = r" This requires the server to support it otherwise it might respond with an"]
-        #[doc = r" error."]
+        /// Compress requests with `gzip`.
+        ///
+        /// This requires the server to support it otherwise it might respond with an
+        /// error.
         pub fn send_gzip(mut self) -> Self {
             self.inner = self.inner.send_gzip();
             self
         }
-        #[doc = r" Enable decompressing responses with `gzip`."]
+
+        /// Enable decompressing responses with `gzip`.
         pub fn accept_gzip(mut self) -> Self {
             self.inner = self.inner.accept_gzip();
             self
@@ -109,7 +109,7 @@ pub mod detector_client {
 pub mod detector_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    #[doc = "Generated trait containing gRPC methods that should be implemented for use with DetectorServer."]
+    /// Generated trait containing gRPC methods that should be implemented for use with DetectorServer.
     #[async_trait]
     pub trait Detector: Send + Sync + 'static {
         async fn detect(
