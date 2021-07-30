@@ -241,7 +241,7 @@ pub mod algorithm {
     {
         pub fn new(size: usize) -> Self {
             SymmetricMatrix {
-                size: size,
+                size,
                 data: vec![T::default(); (size + 1) * size / 2],
             }
         }
@@ -266,6 +266,7 @@ pub mod algorithm {
     }
 
     #[derive(Debug)]
+    #[allow(clippy::upper_case_acronyms)]
     pub struct DBSCAN<T> {
         eps: T,
         min_points: usize,
@@ -280,8 +281,8 @@ pub mod algorithm {
     {
         pub fn new(eps: T, min_points: usize) -> Self {
             DBSCAN {
-                eps: eps,
-                min_points: min_points,
+                eps,
+                min_points,
                 clusters: Vec::new(),
                 visited: Vec::new(),
                 current_cluster: 0,

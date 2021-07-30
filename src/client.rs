@@ -1,6 +1,6 @@
 mod dbscanserving;
 use dbscanserving::detector_client::DetectorClient;
-use dbscanserving::{Metric, Sample, DetectionRequest};
+use dbscanserving::{DetectionRequest, Metric, Sample};
 
 use rand::Rng;
 
@@ -18,8 +18,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut samples: Vec<Sample> = Vec::new();
 
         for _ in 0..200 {
-            let mut sample1 = Sample::default();
-            sample1.id = 1;
+            let mut sample1 = Sample {
+                id: 1,
+                ..Default::default()
+            };
             let mut vec = Vec::<f32>::new();
             for _ in 0..100 {
                 vec.push(rng.gen_range(0.0..10.0));
@@ -29,8 +31,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         for _ in 0..100 {
-            let mut sample1 = Sample::default();
-            sample1.id = 1;
+            let mut sample1 = Sample {
+                id: 1,
+                ..Default::default()
+            };
             let mut vec = Vec::<f32>::new();
             for _ in 0..100 {
                 vec.push(rng.gen_range(50.0..60.0));
@@ -40,8 +44,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         for _ in 0..10 {
-            let mut sample1 = Sample::default();
-            sample1.id = 1;
+            let mut sample1 = Sample {
+                id: 1,
+                ..Default::default()
+            };
             let mut vec = Vec::<f32>::new();
             for _ in 0..100 {
                 vec.push(rng.gen_range(100000.0..20000000000.0));
@@ -55,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             min_samples: 50,
             metric: Metric::Euclidean as i32,
             dimensions: vec![2, 30],
-            samples: samples,
+            samples,
         });
         let response = client.detect(request).await?;
         // println!("RESPONSE={:?}", response);
@@ -65,5 +71,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Time: {}", now.elapsed().as_millis());
 
     Ok(())
-
 }
