@@ -1,7 +1,5 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Sample {
-    #[prost(int32, tag = "1")]
-    pub id: i32,
     #[prost(float, repeated, tag = "2")]
     pub features: ::prost::alloc::vec::Vec<f32>,
 }

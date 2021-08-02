@@ -7,8 +7,7 @@ enum Metric {
 }
 
 message Sample {
-    int32 id = 1;
-    repeated float features = 2;
+    repeated float features = 1;
 }
 
 message DetectionRequest {

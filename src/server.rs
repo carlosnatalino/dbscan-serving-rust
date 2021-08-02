@@ -18,7 +18,23 @@ impl Detector for MyDetector {
     ) -> Result<Response<DetectionResponse>, Status> {
         // println!("REQUEST: {:?}", request);
 
+        // getting the detection request
         let detection_request = request.into_inner();
+
+        // validating the dataset dimensions
+        if detection_request.dimensions.len() != 2 {
+            return Err(Status::new(
+                Code::OutOfRange,
+                format!("The declared dataset dimensions should be of length `2`! Instead, if is currently of length {}", detection_request.dimensions.len()),
+            ));
+        }
+        // validating the number of samples within the dataset
+        if detection_request.dimensions[0] != detection_request.samples.len() as i32 {
+            return Err(Status::new(
+                Code::OutOfRange,
+                format!("The declared number of samples is `{}` but the received dataset contains `{}`!", detection_request.dimensions[0], detection_request.samples.len()),
+            ));
+        }
 
         match Metric::from_i32(detection_request.metric) {
             Some(Metric::Euclidean) => {
@@ -27,15 +43,16 @@ impl Detector for MyDetector {
                 let mut matrix = SymmetricMatrix::<f32>::new(samples.len());
 
                 for (i, o1) in samples.iter().enumerate() {
+                    // validating the number of features
+                    if o1.features.len() as i32 != detection_request.dimensions[1] {
+                        return Err(Status::new(
+                            Code::OutOfRange,
+                            format!("The feature length of sample {} does not match with the declared dimensions!", i+1),
+                        ));
+                    }
                     for (j, o2) in samples.iter().enumerate() {
                         if i < j {
-                            // println!("{} -> {}", o1.id, o2.id);
-                            if o1.features.len() != o2.features.len() {
-                                return Err(Status::new(
-                                    Code::OutOfRange,
-                                    "The feature length among the samples do not match!",
-                                ));
-                            }
+                            // only need to compute the distance between a pair of samples once
                             let mut distance: f32 = 0.;
                             for (p1, p2) in o1.features.iter().zip(&o2.features) {
                                 distance += (p1 - p2).powi(2);
@@ -51,15 +68,18 @@ impl Detector for MyDetector {
 
                 // println!("Average distance: {}", sum_matrix / (samples.len() * samples.len()) as f32);
 
+                // creating an instance of DBSCAN
                 let mut alg = DBSCAN::<f32>::new(
                     detection_request.eps,
                     detection_request.min_samples as usize,
                 );
 
+                // performing the clustering
                 let clusters = alg.perform_clustering(&matrix);
 
                 // println!("\nClusters: {:?}", clusters);
 
+                // converting the indices to the format expected by the response message
                 let indices = clusters
                     .iter()
                     .map(|&x| match x {
@@ -68,15 +88,13 @@ impl Detector for MyDetector {
                     })
                     .collect();
 
-                let reply = DetectionResponse {
+                Ok(Response::new(DetectionResponse {
                     cluster_indices: indices,
-                };
-
-                Ok(Response::new(reply))
+                }))
             }
             None => Err(Status::new(
                 Code::InvalidArgument,
-                "The distance function was not correctly set!",
+                "The distance function was not correctly set! Check again the protobuffer.",
             )),
         }
     }

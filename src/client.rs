@@ -12,44 +12,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let now = std::time::Instant::now();
 
-    // let response = client.detect(request).await?;
-
+    // running 200 times to get a sense of performance
     for _ in 1i32..200 {
         let mut samples: Vec<Sample> = Vec::new();
+        let dim = 100;
 
+        // generating 200 samples for the first cluster
         for _ in 0..200 {
-            let mut sample1 = Sample {
-                id: 1,
-                ..Default::default()
-            };
+            let mut _sample = Sample::default();
             let mut vec = Vec::<f32>::new();
-            for _ in 0..100 {
+            for _ in 0..dim {
                 vec.push(rng.gen_range(0.0..10.0));
             }
-            sample1.features = vec;
-            samples.push(sample1);
+            _sample.features = vec;
+            samples.push(_sample);
         }
 
+        // generating 100 samples for the second cluster
         for _ in 0..100 {
-            let mut sample1 = Sample {
-                id: 1,
-                ..Default::default()
-            };
+            let mut sample1 = Sample::default();
             let mut vec = Vec::<f32>::new();
-            for _ in 0..100 {
+            for _ in 0..dim {
                 vec.push(rng.gen_range(50.0..60.0));
             }
             sample1.features = vec;
             samples.push(sample1);
         }
 
+        // generating 10 anomalous samples
         for _ in 0..10 {
-            let mut sample1 = Sample {
-                id: 1,
-                ..Default::default()
-            };
+            let mut sample1 = Sample::default();
             let mut vec = Vec::<f32>::new();
-            for _ in 0..100 {
+            for _ in 0..dim {
                 vec.push(rng.gen_range(100000.0..20000000000.0));
             }
             sample1.features = vec;
@@ -60,10 +54,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             eps: 100.5,
             min_samples: 50,
             metric: Metric::Euclidean as i32,
-            dimensions: vec![2, 30],
+            dimensions: vec![samples.len() as i32, dim],
             samples,
         });
-        let response = client.detect(request).await?;
+
+        // sending the request
+        client.detect(request).await?;
         // println!("RESPONSE={:?}", response);
         // println!("Length: {}", response.into_inner().cluster_indices.len());
     }

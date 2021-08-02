@@ -13,6 +13,20 @@ The DBSCAN implementation was based upon the code available here:
 - [Implementing DBSCAN from distance matrix in Rust](https://blog.petrzemek.net/2017/01/01/implementing-dbscan-from-distance-matrix-in-rust/)
 - [Implementing dbscan from a distance matrix in Rust (source code)](https://github.com/s3rvac/blog/tree/master/en-2017-01-01-implementing-dbscan-from-distance-matrix-in-rust)
 
+# Using the client/server
+
+To run the server, you need to run:
+
+`cargo run --bin server`
+
+To run the client, you need to run:
+
+`cargo run --bin client`
+
+If you want to create a client using a language other than Rust, you can use the [protobuffer](./proto/dbscanserving.proto) for that.
+
+There is also an implementation in [Python](https://github.com/carlosnatalino/dbscan-serving-python).
+
 ## TODO:
 
 - [ ] Implement gRPC health service
