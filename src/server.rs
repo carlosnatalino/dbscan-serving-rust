@@ -1,20 +1,21 @@
-use tonic::{transport::Server, Request, Response, Status, Code};
+use tonic::{transport::Server, Code, Request, Response, Status};
 
 mod dbscanserving;
 
 use dbscanserving::detector_server::{Detector, DetectorServer};
 use dbscanserving::{DetectionRequest, DetectionResponse, Metric};
 
-use dbscanserving::algorithm::{DBSCAN, SymmetricMatrix};
+use dbscanserving::algorithm::{SymmetricMatrix, DBSCAN};
 
 #[derive(Debug, Default)]
-pub struct MyDetector{}
+pub struct MyDetector {}
 
 #[tonic::async_trait]
 impl Detector for MyDetector {
-
-    async fn detect(&self, request: Request<DetectionRequest>) -> Result<Response<DetectionResponse>, Status> {
-
+    async fn detect(
+        &self,
+        request: Request<DetectionRequest>,
+    ) -> Result<Response<DetectionResponse>, Status> {
         // println!("REQUEST: {:?}", request);
 
         let detection_request = request.into_inner();
@@ -30,11 +31,14 @@ impl Detector for MyDetector {
                         if i < j {
                             // println!("{} -> {}", o1.id, o2.id);
                             if o1.features.len() != o2.features.len() {
-                                return Err(Status::new(Code::OutOfRange, "The feature length among the samples do not match!"));
+                                return Err(Status::new(
+                                    Code::OutOfRange,
+                                    "The feature length among the samples do not match!",
+                                ));
                             }
                             let mut distance: f32 = 0.;
                             for (p1, p2) in o1.features.iter().zip(&o2.features) {
-                                distance = distance + (p1 - p2).powi(2);
+                                distance += (p1 - p2).powi(2);
                                 // println!("P1: {}\tP2: {}\tDistance: {}", p1, p2, distance);
                             }
                             // println!("Distance: {}", distance.sqrt());
@@ -47,18 +51,20 @@ impl Detector for MyDetector {
 
                 // println!("Average distance: {}", sum_matrix / (samples.len() * samples.len()) as f32);
 
-                let mut alg = DBSCAN::<f32>::new(detection_request.eps, detection_request.min_samples as usize);
+                let mut alg = DBSCAN::<f32>::new(
+                    detection_request.eps,
+                    detection_request.min_samples as usize,
+                );
 
                 let clusters = alg.perform_clustering(&matrix);
 
                 // println!("\nClusters: {:?}", clusters);
 
-                let indices = clusters.into_iter()
-                    .map(|&x| {
-                        match x {
-                            Some(i) => i as i32,
-                            None => -1i32,
-                        }
+                let indices = clusters
+                    .iter()
+                    .map(|&x| match x {
+                        Some(i) => i as i32,
+                        None => -1i32,
                     })
                     .collect();
 
@@ -68,12 +74,12 @@ impl Detector for MyDetector {
 
                 Ok(Response::new(reply))
             }
-            None => {
-                Err(Status::new(Code::InvalidArgument, "The distance function was not correctly set!"))
-            }
+            None => Err(Status::new(
+                Code::InvalidArgument,
+                "The distance function was not correctly set!",
+            )),
         }
     }
-
 }
 
 #[tokio::main]
