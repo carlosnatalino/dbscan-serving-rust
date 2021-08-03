@@ -1,15 +1,27 @@
 [package]
 name = "dbscan-serving-rust"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2018"
+repository = "https://github.com/carlosnatalino/dbscan-serving-rust"
+license = "GNU General Public License v3.0"
+authors = ["Carlos Natalino <carlos.natalino@chalmers.se>"]
+description = "A gRPC and REST web-service implementation of the DBSCAN algorithm."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rand = "0.8.4"
+
+# gRPC dependencies
 tonic = "0.5"
 prost = "0.8"
-tokio = { version = "1.9", features = ["macros", "rt-multi-thread"] }
-rand = "0.8.4"
+tokio = { version = "1.6.1", features = ["macros", "rt-multi-thread"] }
+
+# rest dependencies
+actix-web = "3"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+reqwest = { version = "0.11.4", features = ["json"] }
 
 [[bin]]
 name = "server"

@@ -1,9 +1,10 @@
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message, ::serde::Serialize, ::serde::Deserialize)]
 pub struct Sample {
     #[prost(float, repeated, tag = "2")]
     pub features: ::prost::alloc::vec::Vec<f32>,
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
+
+#[derive(Clone, PartialEq, ::prost::Message, ::serde::Serialize, ::serde::Deserialize)]
 pub struct DetectionRequest {
     #[prost(float, tag = "1")]
     pub eps: f32,
@@ -16,11 +17,13 @@ pub struct DetectionRequest {
     #[prost(message, repeated, tag = "5")]
     pub samples: ::prost::alloc::vec::Vec<Sample>,
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
+
+#[derive(Clone, PartialEq, ::prost::Message, ::serde::Serialize, ::serde::Deserialize)]
 pub struct DetectionResponse {
     #[prost(int32, repeated, tag = "1")]
     pub cluster_indices: ::prost::alloc::vec::Vec<i32>,
 }
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum Metric {

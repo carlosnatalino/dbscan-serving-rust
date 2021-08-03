@@ -4,16 +4,24 @@ use dbscanserving::{DetectionRequest, Metric, Sample};
 
 use rand::Rng;
 
+use reqwest::Client;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut rng = rand::thread_rng();
 
-    let mut client = DetectorClient::connect("http://[::1]:50051").await?;
+    let mut grpc_client = DetectorClient::connect("http://[::1]:50051").await?;
 
-    let now = std::time::Instant::now();
+    let request_url = "http://localhost:8080/detect";
+    let rest_client = Client::new();
+
+    let mut sum_grpc: u128 = 0;
+    let mut sum_rest: u128 = 0;
+
+    println!("Starting the gRPC test!");
 
     // running 200 times to get a sense of performance
-    for _ in 1i32..200 {
+    for ida in 1i32..200 {
         let mut samples: Vec<Sample> = Vec::new();
         let dim = 100;
 
@@ -50,21 +58,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             samples.push(sample1);
         }
 
-        let request = tonic::Request::new(DetectionRequest {
+        let detection_request = DetectionRequest {
             eps: 100.5,
             min_samples: 50,
             metric: Metric::Euclidean as i32,
             dimensions: vec![samples.len() as i32, dim],
             samples,
-        });
+        };
+
+        let now = std::time::Instant::now();
+        let response = rest_client
+            .post(request_url)
+            .json(&detection_request)
+            .send()
+            .await?;
+        sum_rest += now.elapsed().as_millis();
+
+        let request = tonic::Request::new(detection_request);
 
         // sending the request
-        client.detect(request).await?;
-        // println!("RESPONSE={:?}", response);
+        let now = std::time::Instant::now();
+        grpc_client.detect(request).await?;
+        sum_grpc += now.elapsed().as_millis();
+
+        println!("RESPONSE={:?}", ida);
         // println!("Length: {}", response.into_inner().cluster_indices.len());
     }
 
-    println!("Time: {}", now.elapsed().as_millis());
+    println!("Avg. time gRPC: {}", sum_grpc / 200);
+    println!("Avg. time REST: {}", sum_rest / 200);
 
     Ok(())
 }
