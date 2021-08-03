@@ -30,6 +30,7 @@ There is also an implementation in [Python](https://github.com/carlosnatalino/db
 ## TODO:
 
 - [ ] Implement gRPC health service
-- [ ] Implement the REST server
+- [x] Implement the REST server
+- [ ] Implement correct error handling such as [here](https://github.com/avinassh/grpc-errors/tree/master/rust)
 - [ ] Improve performance of the DBSCAN algorithm
 - [ ] Implement other distance metrics (inspired by [this](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.DBSCAN.html))
