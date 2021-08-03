@@ -85,8 +85,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // println!("Length: {}", response.into_inner().cluster_indices.len());
     }
 
-    println!("Avg. time gRPC: {}", sum_grpc / 200);
-    println!("Avg. time REST: {}", sum_rest / 200);
+    println!("Avg. time gRPC: {}", sum_grpc as f64 / 200.);
+    println!("Avg. time REST: {}", sum_rest as f64 / 200.);
 
     Ok(())
 }
