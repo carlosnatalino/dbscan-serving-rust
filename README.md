@@ -35,6 +35,22 @@ If you want to create a client using a language other than Rust, you can use the
 
 There is also an implementation in [Python](https://github.com/carlosnatalino/dbscan-serving-python).
 
+# Running using Docker
+
+You can run a container with a compiled version of this project by running:
+
+```
+docker run --rm -it -p 5051:5051 -p 5052:5052 carlosnatalino/dbscan-serving-rust:0.1.3
+```
+
+# Build your own lightweight Docker image with musl
+
+The `Dockerfile` in this project uses `musl` to build a statically-linked binary that can be run with a `scratch` Docker image.
+
+Running `docker build -t dbscan-serving-rust .` should be enough to build using `musl` and create an image based on `scratch`.
+
+For more information, visit [this repository](https://github.com/emk/rust-musl-builder).
+
 # Performance
 
 **The results reported below are obtained using a non-scientific method and if performance measures are critical to you you should run your own tests in your own platform.**

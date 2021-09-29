@@ -7,6 +7,7 @@ use dbscanserving::detector_server::{Detector, DetectorServer};
 use dbscanserving::{DetectionRequest, DetectionResponse, Metric};
 
 use actix_web::{error, middleware, rt, web, App, HttpResponse, HttpServer, Responder};
+use std::process;
 use std::thread;
 
 #[derive(Debug, Default)]
@@ -18,7 +19,7 @@ impl Detector for MyDetector {
         &self,
         request: Request<DetectionRequest>,
     ) -> Result<Response<DetectionResponse>, Status> {
-        println!("gRPC request received");
+        println!("gRPC request received: {:?}", request);
 
         // getting the detection request
         let detection_request = request.into_inner();
@@ -194,11 +195,14 @@ async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responde
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "[::1]:50051".parse()?;
+    // let addr = "[::1]:5051".parse()?; // use this for IPv6 -- may have conflicts with Docker
+    let addr = "0.0.0.0:5051".parse()?;
     let detector = MyDetector::default();
 
-    thread::spawn(|| {
+    let _handler = thread::spawn(|| {
         let mut _sys = rt::System::new("rest");
+        let rest_port = 5052;
+        println!("Starting to serve REST on {}", format!("0.0.0.0:{}", rest_port));
 
         HttpServer::new(|| {
             App::new()
@@ -221,12 +225,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .to(detect),
                 )
         })
-        .bind("127.0.0.1:8080")
+        .bind(format!("0.0.0.0:{}", rest_port))
         .unwrap()
         .run();
+        thread::park();
     });
 
-    println!("Starting to serve...");
+    ctrlc::set_handler(|| {
+        println!("Stopping...");
+        process::exit(0);
+    }).expect("Error setting Ctrl-C handler");
+
+    println!("Starting to serve GRPC on {}", addr);
     Server::builder()
         .add_service(DetectorServer::new(detector))
         .serve(addr)

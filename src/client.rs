@@ -10,9 +10,9 @@ use reqwest::Client;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut rng = rand::thread_rng();
 
-    let mut grpc_client = DetectorClient::connect("http://[::1]:50051").await?;
+    let mut grpc_client = DetectorClient::connect("http://127.0.0.1:5051").await?;
 
-    let request_url = "http://localhost:8080/detect";
+    let request_url = "http://127.0.0.1:5052/detect";
     let rest_client = Client::new();
 
     let mut sum_grpc: u128 = 0;
@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Starting the gRPC test!");
 
     // running 200 times to get a sense of performance
-    for ida in 1i32..200 {
+    for ida in 1i32..2000 {
         let mut samples: Vec<Sample> = Vec::new();
         let dim = 100;
 
