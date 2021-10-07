@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Starting the gRPC test!");
 
     // running 200 times to get a sense of performance
-    for ida in 1i32..2000 {
+    for ida in 1i32..200 {
         let mut samples: Vec<Sample> = Vec::new();
         let dim = 100;
 
