@@ -19,7 +19,7 @@ impl Detector for MyDetector {
         &self,
         request: Request<DetectionRequest>,
     ) -> Result<Response<DetectionResponse>, Status> {
-        println!("gRPC request received: {:?}", request);
+        // println!("gRPC request received: {:?}", request);
 
         // getting the detection request
         let detection_request = request.into_inner();
@@ -104,7 +104,7 @@ impl Detector for MyDetector {
 }
 
 async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responder {
-    println!("REST request received");
+    // println!("REST request received");
 
     if detection_request.dimensions.len() != 2 {
         let reply = DetectionResponse {
