@@ -68,7 +68,7 @@ For comparison purposes, the [Python](https://github.com/carlosnatalino/dbscan-s
 
 ## TODO:
 
-- [ ] Implement gRPC health service
+- [x] Implement gRPC health service
 - [x] Implement the REST server
 - [ ] Implement correct error handling such as [here](https://github.com/avinassh/grpc-errors/tree/master/rust)
 - [ ] Improve performance of the DBSCAN algorithm

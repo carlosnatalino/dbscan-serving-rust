@@ -1,4 +1,5 @@
 use tonic::{transport::Server, Code, Request, Response, Status};
+// use tonic_health::server::HealthReporter;
 
 mod dbscanserving;
 
@@ -237,7 +238,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }).expect("Error setting Ctrl-C handler");
 
     println!("Starting to serve GRPC on {}", addr);
+    let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
+    health_reporter
+        .set_serving::<DetectorServer<MyDetector>>()
+        .await;
+    
+
     Server::builder()
+        .add_service(health_service)
         .add_service(DetectorServer::new(detector))
         .serve(addr)
         .await?;
