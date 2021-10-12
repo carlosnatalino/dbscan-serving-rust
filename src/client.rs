@@ -62,7 +62,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             eps: 100.5,
             min_samples: 50,
             metric: Metric::Euclidean as i32,
-            dimensions: vec![samples.len() as i32, dim],
+            num_samples: samples.len() as i32,
+            num_features: dim,
             samples,
         };
 

@@ -12,9 +12,11 @@ pub struct DetectionRequest {
     pub min_samples: i32,
     #[prost(enumeration = "Metric", tag = "3")]
     pub metric: i32,
-    #[prost(int32, repeated, tag = "4")]
-    pub dimensions: ::prost::alloc::vec::Vec<i32>,
-    #[prost(message, repeated, tag = "5")]
+    #[prost(int32, tag = "4")]
+    pub num_samples: i32,
+    #[prost(int32, tag = "5")]
+    pub num_features: i32,
+    #[prost(message, repeated, tag = "6")]
     pub samples: ::prost::alloc::vec::Vec<Sample>,
 }
 
