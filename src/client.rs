@@ -10,9 +10,9 @@ use reqwest::Client;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut rng = rand::thread_rng();
 
-    let mut grpc_client = DetectorClient::connect("http://127.0.0.1:5051").await?;
+    let mut grpc_client = DetectorClient::connect("http://10.99.34.70:5051").await?;
 
-    let request_url = "http://127.0.0.1:5052/detect";
+    let request_url = "http://10.99.34.70:5052/detect";
     let rest_client = Client::new();
 
     let mut sum_grpc: u128 = 0;
@@ -67,11 +67,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
 
         let now = std::time::Instant::now();
-        let response = rest_client
-            .post(request_url)
-            .json(&detection_request)
-            .send()
-            .await?;
+        // let response = rest_client
+        //     .post(request_url)
+        //     .json(&detection_request)
+        //     .send()
+        //     .await?;
         sum_rest += now.elapsed().as_millis();
 
         let request = tonic::Request::new(detection_request);

@@ -104,6 +104,10 @@ impl Detector for MyDetector {
     }
 }
 
+async fn healthz() -> HttpResponse {
+    HttpResponse::Ok().content_type("application/json").body("")
+}
+
 async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responder {
     // println!("REST request received");
 
@@ -180,7 +184,7 @@ async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responde
             let reply = DetectionResponse {
                 cluster_indices: indices,
             };
-            println!("Success!");
+            // println!("Success!");
             web::Json(reply)
         }
         None => {
@@ -210,6 +214,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // enable logger
                 .wrap(middleware::Logger::default())
                 .service(web::resource("/").to(|| async { "Call the /detect endpoint!" }))
+                .service(web::resource("/healthz").to(healthz))
                 .service(
                     web::resource("/detect")
                         // enabling the server to receive large requests
