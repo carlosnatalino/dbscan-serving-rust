@@ -24,6 +24,8 @@ impl Detector for MyDetector {
         // getting the detection request
         let detection_request = request.into_inner();
 
+        println!("gRPC request received with id: {:?}", detection_request.identifier);
+
         // validating the number of samples within the dataset
         if detection_request.num_samples != detection_request.samples.len() as i32 {
             return Err(Status::new(
