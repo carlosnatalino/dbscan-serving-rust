@@ -17,6 +17,7 @@ message DetectionRequest {
     int32 num_samples = 4;
     int32 num_features = 5;
     repeated Sample samples = 6;
+    optional int32 identifier = 7;
 }
 
 message DetectionResponse {

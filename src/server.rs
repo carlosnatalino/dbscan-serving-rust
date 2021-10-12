@@ -1,19 +1,14 @@
 use tonic::{transport::Server, Code, Request, Response, Status};
-// use tonic_health::server::HealthReporter;
-
-// mod dbscanserving;
-
-// use dbscanserving::algorithm::{SymmetricMatrix, DBSCAN};
-// use dbscanserving::detector_server::{Detector, DetectorServer};
-// use dbscanserving::{DetectionRequest, DetectionResponse, Metric};
-
 use actix_web::{error, middleware, rt, web, App, HttpResponse, HttpServer, Responder};
 use std::process;
 use std::thread;
 
-pub mod dbscanserving {
-    tonic::include_proto!("dbscanserving"); // The string specified here must match the proto package name
-}
+mod dbscan;
+use dbscan::{DBSCAN, SymmetricMatrix};
+
+mod dbscanserving;
+use dbscanserving::detector_server::{Detector, DetectorServer};
+use dbscanserving::{DetectionRequest, DetectionResponse, Metric};
 
 #[derive(Debug, Default)]
 pub struct MyDetector {}
