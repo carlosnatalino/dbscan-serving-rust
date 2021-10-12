@@ -1,15 +1,14 @@
 use tonic::{transport::Server, Code, Request, Response, Status};
-// use tonic_health::server::HealthReporter;
-
-mod dbscanserving;
-
-use dbscanserving::algorithm::{SymmetricMatrix, DBSCAN};
-use dbscanserving::detector_server::{Detector, DetectorServer};
-use dbscanserving::{DetectionRequest, DetectionResponse, Metric};
-
 use actix_web::{error, middleware, rt, web, App, HttpResponse, HttpServer, Responder};
 use std::process;
 use std::thread;
+
+mod dbscan;
+use dbscan::{DBSCAN, SymmetricMatrix};
+
+mod dbscanserving;
+use dbscanserving::detector_server::{Detector, DetectorServer};
+use dbscanserving::{DetectionRequest, DetectionResponse, Metric};
 
 #[derive(Debug, Default)]
 pub struct MyDetector {}
@@ -25,18 +24,11 @@ impl Detector for MyDetector {
         // getting the detection request
         let detection_request = request.into_inner();
 
-        // validating the dataset dimensions
-        if detection_request.dimensions.len() != 2 {
-            return Err(Status::new(
-                Code::OutOfRange,
-                format!("The declared dataset dimensions should be of length `2`! Instead, if is currently of length {}", detection_request.dimensions.len()),
-            ));
-        }
         // validating the number of samples within the dataset
-        if detection_request.dimensions[0] != detection_request.samples.len() as i32 {
+        if detection_request.num_samples != detection_request.samples.len() as i32 {
             return Err(Status::new(
                 Code::OutOfRange,
-                format!("The declared number of samples is `{}` but the received dataset contains `{}`!", detection_request.dimensions[0], detection_request.samples.len()),
+                format!("The declared number of samples is `{}` but the received dataset contains `{}`!", detection_request.num_samples, detection_request.samples.len()),
             ));
         }
 
@@ -48,7 +40,7 @@ impl Detector for MyDetector {
 
                 for (i, o1) in samples.iter().enumerate() {
                     // validating the number of features
-                    if o1.features.len() as i32 != detection_request.dimensions[1] {
+                    if o1.features.len() as i32 != detection_request.num_features {
                         return Err(Status::new(
                             Code::OutOfRange,
                             format!("The feature length of sample {} does not match with the declared dimensions!", i+1),
@@ -111,16 +103,8 @@ async fn healthz() -> HttpResponse {
 async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responder {
     // println!("REST request received");
 
-    if detection_request.dimensions.len() != 2 {
-        let reply = DetectionResponse {
-            cluster_indices: vec![10],
-        };
-        println!("Error!");
-        // TODO: improve error reply
-        return web::Json(reply);
-    }
     // validating the number of samples within the dataset
-    if detection_request.dimensions[0] != detection_request.samples.len() as i32 {
+    if detection_request.num_samples != detection_request.samples.len() as i32 {
         let reply = DetectionResponse {
             cluster_indices: vec![10],
         };
@@ -138,7 +122,7 @@ async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responde
             let mut matrix = SymmetricMatrix::<f32>::new(samples.len());
 
             for (i, o1) in samples.iter().enumerate() {
-                if o1.features.len() as i32 != detection_request.dimensions[1] {
+                if o1.features.len() as i32 != detection_request.num_features {
                     let reply = DetectionResponse {
                         cluster_indices: vec![10],
                     };

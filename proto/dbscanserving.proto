@@ -14,8 +14,10 @@ message DetectionRequest {
     float eps = 1;
     int32 min_samples = 2;
     Metric metric = 3;
-    repeated int32 dimensions = 4;
-    repeated Sample samples = 5;
+    int32 num_samples = 4;
+    int32 num_features = 5;
+    repeated Sample samples = 6;
+    optional int32 identifier = 7;
 }
 
 message DetectionResponse {

@@ -1,6 +1,6 @@
 #[derive(Clone, PartialEq, ::prost::Message, ::serde::Serialize, ::serde::Deserialize)]
 pub struct Sample {
-    #[prost(float, repeated, tag = "2")]
+    #[prost(float, repeated, tag = "1")]
     pub features: ::prost::alloc::vec::Vec<f32>,
 }
 
@@ -12,10 +12,14 @@ pub struct DetectionRequest {
     pub min_samples: i32,
     #[prost(enumeration = "Metric", tag = "3")]
     pub metric: i32,
-    #[prost(int32, repeated, tag = "4")]
-    pub dimensions: ::prost::alloc::vec::Vec<i32>,
-    #[prost(message, repeated, tag = "5")]
+    #[prost(int32, tag = "4")]
+    pub num_samples: i32,
+    #[prost(int32, tag = "5")]
+    pub num_features: i32,
+    #[prost(message, repeated, tag = "6")]
     pub samples: ::prost::alloc::vec::Vec<Sample>,
+    #[prost(int32, optional, tag = "7")]
+    pub identifier: ::core::option::Option<i32>,
 }
 
 #[derive(Clone, PartialEq, ::prost::Message, ::serde::Serialize, ::serde::Deserialize)]
@@ -30,12 +34,46 @@ pub enum Metric {
     Euclidean = 0,
 }
 
+/// Generated client implementations.
 pub mod detector_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    #[derive(Debug, Clone)]
     pub struct DetectorClient<T> {
         inner: tonic::client::Grpc<T>,
+    }
+    #[automatically_derived]
+    #[allow(unused_qualifications)]
+    impl<T: ::core::fmt::Debug> ::core::fmt::Debug for DetectorClient<T> {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+            match *self {
+                DetectorClient {
+                    inner: ref __self_0_0,
+                } => {
+                    let debug_trait_builder =
+                        &mut ::core::fmt::Formatter::debug_struct(f, "DetectorClient");
+                    let _ = ::core::fmt::DebugStruct::field(
+                        debug_trait_builder,
+                        "inner",
+                        &&(*__self_0_0),
+                    );
+                    ::core::fmt::DebugStruct::finish(debug_trait_builder)
+                }
+            }
+        }
+    }
+    #[automatically_derived]
+    #[allow(unused_qualifications)]
+    impl<T: ::core::clone::Clone> ::core::clone::Clone for DetectorClient<T> {
+        #[inline]
+        fn clone(&self) -> DetectorClient<T> {
+            match *self {
+                DetectorClient {
+                    inner: ref __self_0_0,
+                } => DetectorClient {
+                    inner: ::core::clone::Clone::clone(&(*__self_0_0)),
+                },
+            }
+        }
     }
     impl DetectorClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
@@ -64,7 +102,7 @@ pub mod detector_client {
             interceptor: F,
         ) -> DetectorClient<InterceptedService<T, F>>
         where
-            F: FnMut(tonic::Request<()>) -> Result<tonic::Request<()>, tonic::Status>,
+            F: tonic::service::Interceptor,
             T: tonic::codegen::Service<
                 http::Request<tonic::body::BoxBody>,
                 Response = http::Response<
@@ -84,7 +122,6 @@ pub mod detector_client {
             self.inner = self.inner.send_gzip();
             self
         }
-
         /// Enable decompressing responses with `gzip`.
         pub fn accept_gzip(mut self) -> Self {
             self.inner = self.inner.accept_gzip();
@@ -95,9 +132,7 @@ pub mod detector_client {
             request: impl tonic::IntoRequest<super::DetectionRequest>,
         ) -> Result<tonic::Response<super::DetectionResponse>, tonic::Status> {
             self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
+                tonic::Status::new(tonic::Code::Unknown, format!("Service was not ready: {}", e.into()),
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
@@ -106,25 +141,68 @@ pub mod detector_client {
         }
     }
 }
-
+/// Generated server implementations.
 pub mod detector_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-
-    /// Generated trait containing gRPC methods that should be implemented for
-    /// use with [DetectorServer].
-    #[async_trait]
+    ///Generated trait containing gRPC methods that should be implemented for use with DetectorServer.
     pub trait Detector: Send + Sync + 'static {
-        async fn detect(
-            &self,
+        #[must_use]
+        #[allow(clippy::type_complexity, clippy::type_repetition_in_bounds)]
+        fn detect<'life0, 'async_trait>(
+            &'life0 self,
             request: tonic::Request<super::DetectionRequest>,
-        ) -> Result<tonic::Response<super::DetectionResponse>, tonic::Status>;
+        ) -> ::core::pin::Pin<
+            Box<
+                dyn ::core::future::Future<
+                        Output = Result<
+                            tonic::Response<super::DetectionResponse>,
+                            tonic::Status,
+                        >,
+                    > + ::core::marker::Send
+                    + 'async_trait,
+            >,
+        >
+        where
+            'life0: 'async_trait,
+            Self: 'async_trait;
     }
-    #[derive(Debug)]
     pub struct DetectorServer<T: Detector> {
         inner: _Inner<T>,
         accept_compression_encodings: (),
         send_compression_encodings: (),
+    }
+    #[automatically_derived]
+    #[allow(unused_qualifications)]
+    impl<T: ::core::fmt::Debug + Detector> ::core::fmt::Debug for DetectorServer<T> {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+            match *self {
+                DetectorServer {
+                    inner: ref __self_0_0,
+                    accept_compression_encodings: ref __self_0_1,
+                    send_compression_encodings: ref __self_0_2,
+                } => {
+                    let debug_trait_builder =
+                        &mut ::core::fmt::Formatter::debug_struct(f, "DetectorServer");
+                    let _ = ::core::fmt::DebugStruct::field(
+                        debug_trait_builder,
+                        "inner",
+                        &&(*__self_0_0),
+                    );
+                    let _ = ::core::fmt::DebugStruct::field(
+                        debug_trait_builder,
+                        "accept_compression_encodings",
+                        &&(*__self_0_1),
+                    );
+                    let _ = ::core::fmt::DebugStruct::field(
+                        debug_trait_builder,
+                        "send_compression_encodings",
+                        &&(*__self_0_2),
+                    );
+                    ::core::fmt::DebugStruct::finish(debug_trait_builder)
+                }
+            }
+        }
     }
     struct _Inner<T>(Arc<T>);
     impl<T: Detector> DetectorServer<T> {
@@ -139,7 +217,7 @@ pub mod detector_server {
         }
         pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
-            F: FnMut(tonic::Request<()>) -> Result<tonic::Request<()>, tonic::Status>,
+            F: tonic::service::Interceptor,
         {
             InterceptedService::new(Self::new(inner), interceptor)
         }
@@ -181,10 +259,11 @@ pub mod detector_server {
                         let inner = inner.0;
                         let method = DetectSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
-                            accept_compression_encodings,
-                            send_compression_encodings,
-                        );
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            );
                         let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
@@ -223,124 +302,5 @@ pub mod detector_server {
     }
     impl<T: Detector> tonic::transport::NamedService for DetectorServer<T> {
         const NAME: &'static str = "dbscanserving.Detector";
-    }
-}
-
-pub mod algorithm {
-
-    use std::collections::VecDeque;
-
-    #[derive(Debug)]
-    pub struct SymmetricMatrix<T> {
-        size: usize,
-        data: Vec<T>,
-    }
-
-    impl<T> SymmetricMatrix<T>
-    where
-        T: Default + Copy,
-    {
-        pub fn new(size: usize) -> Self {
-            SymmetricMatrix {
-                size,
-                data: vec![T::default(); (size + 1) * size / 2],
-            }
-        }
-        pub fn size(&self) -> usize {
-            self.size
-        }
-        pub fn get(&self, row: usize, col: usize) -> T {
-            let index = self.index_for(row, col);
-            self.data[index]
-        }
-        pub fn set(&mut self, row: usize, col: usize, value: T) {
-            let index = self.index_for(row, col);
-            self.data[index] = value;
-        }
-        fn index_for(&self, row: usize, col: usize) -> usize {
-            if col > row {
-                col * (col + 1) / 2 + row
-            } else {
-                row * (row + 1) / 2 + col
-            }
-        }
-    }
-
-    #[derive(Debug)]
-    #[allow(clippy::upper_case_acronyms)]
-    pub struct DBSCAN<T> {
-        eps: T,
-        min_points: usize,
-        clusters: Vec<Option<usize>>,
-        visited: Vec<bool>,
-        current_cluster: usize,
-    }
-
-    impl<T> DBSCAN<T>
-    where
-        T: Default + Copy + PartialOrd,
-    {
-        pub fn new(eps: T, min_points: usize) -> Self {
-            DBSCAN {
-                eps,
-                min_points,
-                clusters: Vec::new(),
-                visited: Vec::new(),
-                current_cluster: 0,
-            }
-        }
-
-        pub fn perform_clustering(&mut self, matrix: &SymmetricMatrix<T>) -> &Vec<Option<usize>> {
-            self.clusters = vec![None; matrix.size()];
-            self.visited = vec![false; matrix.size()];
-            self.current_cluster = 0;
-
-            for point in 0..matrix.size() {
-                if self.visited[point] {
-                    continue;
-                }
-                self.visited[point] = true;
-                let neighbors = self.region_query(matrix, point);
-                if neighbors.len() >= self.min_points {
-                    self.expand_cluster(matrix, point, neighbors);
-                    self.current_cluster += 1;
-                }
-            }
-
-            self.clusters.as_ref()
-        }
-
-        fn region_query(&self, matrix: &SymmetricMatrix<T>, point: usize) -> VecDeque<usize> {
-            let mut neighbors = VecDeque::new();
-            for other_point in 0..matrix.size() {
-                let dist = matrix.get(point, other_point);
-                if dist <= self.eps {
-                    neighbors.push_back(other_point);
-                }
-            }
-            neighbors
-        }
-
-        fn expand_cluster(
-            &mut self,
-            matrix: &SymmetricMatrix<T>,
-            point: usize,
-            mut neighbors: VecDeque<usize>,
-        ) {
-            self.clusters[point] = Some(self.current_cluster);
-
-            while let Some(other_point) = neighbors.pop_front() {
-                if !self.visited[other_point] {
-                    self.visited[other_point] = true;
-                    let mut other_neighbors = self.region_query(matrix, other_point);
-                    if other_neighbors.len() >= self.min_points {
-                        neighbors.append(&mut other_neighbors);
-                    }
-                }
-                if self.clusters[other_point].is_none() {
-                    self.clusters[other_point] = Some(self.current_cluster);
-                }
-            }
-        }
     }
 }
