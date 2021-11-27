@@ -11,8 +11,8 @@ use reqwest::Client;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut rng = rand::thread_rng();
 
-    let client_ip = "10.108.250.232";
-    let num_reqs = 10000;
+    let client_ip = "localhost";
+    let num_reqs = 1000;
 
     let mut grpc_client = DetectorClient::connect(format!("http://{}:5051", client_ip)).await?;
 
