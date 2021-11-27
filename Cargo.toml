@@ -12,6 +12,8 @@ description = "A gRPC and REST web-service implementation of the DBSCAN algorith
 [dependencies]
 rand = "0.8.4"
 ctrlc = { version = "3.0", features = ["termination"] }
+prometheus = { version = "0.13", features = ["process"] }
+lazy_static = "1.4.0"
 
 # gRPC dependencies
 tonic = "0.5"
