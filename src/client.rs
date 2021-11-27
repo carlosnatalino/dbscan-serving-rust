@@ -14,9 +14,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client_ip = "localhost";
     let num_reqs = 1000;
 
-    let mut grpc_client = DetectorClient::connect(format!("http://{}:5051", client_ip)).await?;
+    let mut grpc_client = DetectorClient::connect(format!("http://{}:8500", client_ip)).await?;
 
-    // let request_url = "http://localhost:5052/detect";
+    // let request_url = "http://localhost:8501/detect";
     // let rest_client = Client::new();
 
     let mut sum_grpc: u128 = 0;
