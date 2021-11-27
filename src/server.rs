@@ -1,7 +1,12 @@
-use tonic::{transport::Server, Code, Request, Response, Status};
-use actix_web::{error, middleware, rt, web, App, HttpResponse, HttpServer, Responder};
 use std::process;
 use std::thread;
+
+use tonic::{transport::Server, Code, Request, Response, Status};
+
+use actix_web::{error, middleware, rt, web, App, HttpResponse, HttpServer, Responder};
+
+use prometheus::{Encoder, TextEncoder};
+mod metrics;
 
 mod dbscan;
 use dbscan::{DBSCAN, SymmetricMatrix};
@@ -19,13 +24,18 @@ impl Detector for MyDetector {
         &self,
         request: Request<DetectionRequest>,
     ) -> Result<Response<DetectionResponse>, Status> {
+        let timer = metrics::RESPONSE_TIME_GRPC.start_timer();
+        metrics::INCOMING_REQUESTS_GRPC.inc();
         // println!("gRPC request received: {:?}", request);
 
         // getting the detection request
         let detection_request = request.into_inner();
 
+        // println!("gRPC request received with id: {:?}", detection_request.identifier);
+
         // validating the number of samples within the dataset
         if detection_request.num_samples != detection_request.samples.len() as i32 {
+            timer.stop_and_discard();
             return Err(Status::new(
                 Code::OutOfRange,
                 format!("The declared number of samples is `{}` but the received dataset contains `{}`!", detection_request.num_samples, detection_request.samples.len()),
@@ -83,24 +93,34 @@ impl Detector for MyDetector {
                         None => -1i32,
                     })
                     .collect();
+                
+                // timer.observe_duration();
+                let x = timer.stop_and_record();
+                println!("GRPC: {}", x);
 
                 Ok(Response::new(DetectionResponse {
                     cluster_indices: indices,
                 }))
             }
-            None => Err(Status::new(
-                Code::InvalidArgument,
-                "The distance function was not correctly set! Check again the protobuffer.",
-            )),
+            None => {
+                timer.stop_and_discard();
+                Err(Status::new(
+                    Code::InvalidArgument,
+                    "The distance function was not correctly set! Check again the protobuffer.",
+                ))
+            },
         }
     }
 }
 
 async fn healthz() -> HttpResponse {
+    // HttpResponse::Ok().content_type(ContentType::TEXT_PLAIN).body("")
     HttpResponse::Ok().content_type("application/json").body("")
 }
 
 async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responder {
+    let timer = metrics::RESPONSE_TIME_REST.start_timer();
+    metrics::INCOMING_REQUESTS_REST.inc();
     // println!("REST request received");
 
     // validating the number of samples within the dataset
@@ -109,6 +129,7 @@ async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responde
             cluster_indices: vec![10],
         };
         println!("Error!");
+        timer.stop_and_discard();
         // TODO: improve error reply
         return web::Json(reply);
     }
@@ -128,6 +149,7 @@ async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responde
                     };
                     println!("Error!");
                     // TODO: improve error reply
+                    timer.observe_duration();
                     return web::Json(reply);
                 }
                 for (j, o2) in samples.iter().enumerate() {
@@ -168,6 +190,9 @@ async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responde
             let reply = DetectionResponse {
                 cluster_indices: indices,
             };
+            // timer.observe_duration();
+            let x = timer.stop_and_record();
+            println!("REST: {}", x);
             // println!("Success!");
             web::Json(reply)
         }
@@ -177,9 +202,25 @@ async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responde
             };
             println!("Error!");
             // TODO: improve error reply
+            timer.stop_and_discard();
             web::Json(reply)
         }
     }
+}
+
+pub async fn metrics() -> impl Responder {
+    let encoder = TextEncoder::new();
+    let mut buffer = vec![];
+    encoder
+        .encode(&prometheus::gather(), &mut buffer)
+        .expect("Failed to encode metrics");
+
+    let response = String::from_utf8(buffer.clone()).expect("Failed to convert bytes to string");
+    buffer.clear();
+
+    HttpResponse::Ok()
+        .content_type("text/plain")
+        .body(response)
 }
 
 #[tokio::main]
@@ -198,6 +239,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // enable logger
                 .wrap(middleware::Logger::default())
                 .service(web::resource("/").to(|| async { "Call the /detect endpoint!" }))
+                .service(web::resource("/metrics").to(metrics))
                 .service(web::resource("/healthz").to(healthz))
                 .service(
                     web::resource("/detect")
