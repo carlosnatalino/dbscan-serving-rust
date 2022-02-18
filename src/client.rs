@@ -14,13 +14,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client_ip = "localhost";
     let num_reqs = 1000;
 
-    let mut grpc_client = DetectorClient::connect(format!("http://{}:8500", client_ip)).await?;
+    let mut grpc_client = DetectorClient::connect(format!("http://{}:9094", client_ip)).await?;
 
-    // let request_url = "http://localhost:8501/detect";
-    // let rest_client = Client::new();
+    let request_url = "http://localhost:9095/detect";
+    let rest_client = Client::new();
 
     let mut sum_grpc: u128 = 0;
-    // let mut sum_rest: u128 = 0;
+    let mut sum_rest: u128 = 0;
 
     println!("Starting the gRPC test!");
 
@@ -73,19 +73,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             identifier: Some(ida),
         };
 
-        // let now = std::time::Instant::now();
-        // let _response = rest_client
-        //     .post(request_url)
-        //     .json(&detection_request)
-        //     .send()
-        //     .await?;
-        // sum_rest += now.elapsed().as_millis();
+        let now = std::time::Instant::now();
+        let _response = rest_client
+            .post(request_url)
+            .json(&detection_request)
+            .send()
+            .await?;
+        sum_rest += now.elapsed().as_millis();
 
         let request = tonic::Request::new(detection_request);
 
         // sending the request
         let now = std::time::Instant::now();
-        let response = grpc_client.detect(request).await?;
+        let _response = grpc_client.detect(request).await?;
         // println!("response: {:?}", response);
         sum_grpc += now.elapsed().as_millis();
         // thread::sleep(Duration::from_millis(100));
@@ -95,7 +95,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!("Avg. time gRPC: {}", sum_grpc as f64 / num_reqs as f64);
-    // println!("Avg. time REST: {}", sum_rest as f64 / 200.);
+    println!("Avg. time REST: {}", sum_rest as f64 / 200.);
 
     Ok(())
 }
