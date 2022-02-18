@@ -1,21 +1,17 @@
-use std::process;
-use std::thread;
-use std::env;
-use std::net::{IpAddr, Ipv4Addr};
+use actix_web::{web, HttpResponse, Responder};
 
-use tonic::{transport::Server, Code, Request, Response, Status};
-
-use actix_web::{error, middleware, rt, web, App, HttpResponse, HttpRequest, HttpServer, Responder};
+use tonic::{Code, Request, Response, Status};
 
 use prometheus::{Encoder, TextEncoder};
-mod metrics;
 
+use crate::metrics;
+
+#[path="dbscan.rs"]
 mod dbscan;
 use dbscan::{DBSCAN, SymmetricMatrix};
 
-mod dbscanserving;
-use dbscanserving::detector_server::{Detector, DetectorServer};
-use dbscanserving::{DetectionRequest, DetectionResponse, Metric};
+use crate::dbscanserving::detector_server::Detector;
+use crate::dbscanserving::{DetectionRequest, DetectionResponse, Metric};
 
 #[derive(Debug, Default)]
 pub struct MyDetector {}
@@ -33,7 +29,7 @@ impl Detector for MyDetector {
         // getting the detection request
         let detection_request = request.into_inner();
 
-        // println!("gRPC request received with id: {:?}", detection_request.identifier);
+        println!("gRPC request received with id: {:?}", detection_request.identifier);
 
         // validating the number of samples within the dataset
         if detection_request.num_samples != detection_request.samples.len() as i32 {
@@ -115,12 +111,12 @@ impl Detector for MyDetector {
     }
 }
 
-async fn healthz() -> HttpResponse {
+pub async fn healthz() -> HttpResponse {
     // HttpResponse::Ok().content_type(ContentType::TEXT_PLAIN).body("")
     HttpResponse::Ok().content_type("application/json").body("")
 }
 
-async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responder {
+pub async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responder {
     let timer = metrics::RESPONSE_TIME_REST.start_timer();
     metrics::INCOMING_REQUESTS_REST.inc();
     // println!("REST request received");
@@ -210,17 +206,7 @@ async fn detect(detection_request: web::Json<DetectionRequest>) -> impl Responde
     }
 }
 
-pub async fn metrics(req: HttpRequest) -> impl Responder {
-    // filtering based on source IP
-    let peer_ip = req.peer_addr();
-    // req.connection_info().realip_remote_addr()
-    if peer_ip.is_some() {
-        // println!("remote addr: {:?}", req.connection_info().realip_remote_addr());
-        let client_address = peer_ip.unwrap();
-        if client_address.ip() != IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)) {
-            return HttpResponse::Unauthorized().finish();
-        }
-    }
+pub async fn prometheus_metrics() -> impl Responder {
     let encoder = TextEncoder::new();
     let mut buffer = vec![];
     encoder
@@ -233,73 +219,4 @@ pub async fn metrics(req: HttpRequest) -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/plain")
         .body(response)
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    dotenv::from_filename(".env.local").ok();
-
-    // if let Some(env::var("BIND_ADDRESS")) = bind_address;
-
-    let bind_address = env::var("BIND_ADDRESS").unwrap_or("127.0.0.1".to_string());
-    let grpc_port = env::var("GRPC_API_PORT").unwrap_or("8500".to_string()).parse::<i32>().unwrap_or_else(|_| panic!("The value `{}` is not a valid port!", env::var("GRPC_PORT").unwrap()));
-    let rest_port = env::var("REST_API_PORT").unwrap_or("8501".to_string()).parse::<i32>().unwrap_or_else(|_| panic!("The value `{}` is not a valid port!", env::var("GRPC_PORT").unwrap()));
-    let metrics_port = env::var("METRICS_PORT").unwrap_or("9192".to_string()).parse::<i32>().unwrap_or_else(|_| panic!("The value `{}` is not a valid port!", env::var("METRICS_PORT").unwrap()));
-
-    // let addr = "[::1]:5051".parse()?; // use this for IPv6 -- may have conflicts with Docker
-    let addr = format!("{}:{}", bind_address, grpc_port).parse()?;
-    let detector = MyDetector::default();
-
-    let _handler = thread::spawn(|| {
-        let mut _sys = rt::System::new("rest");
-        let rest_port = 5052;
-        println!("Starting to serve REST on {}", format!("0.0.0.0:{}", rest_port));
-
-        HttpServer::new(|| {
-            App::new()
-                // enable logger
-                .wrap(middleware::Logger::default())
-                .service(web::resource("/").to(|| async { "Call the /detect endpoint!" }))
-                .service(web::resource("/metrics").to(metrics))
-                .service(web::resource("/healthz").to(healthz))
-                .service(
-                    web::resource("/detect")
-                        // enabling the server to receive large requests
-                        .app_data(web::JsonConfig::default().limit(409600).error_handler(
-                            |err, _req| {
-                                // create custom error response
-                                error::InternalError::from_response(
-                                    err,
-                                    HttpResponse::Conflict().finish(),
-                                )
-                                .into()
-                            },
-                        ))
-                        .to(detect),
-                )
-        })
-        .bind(format!("0.0.0.0:{}", rest_port))
-        .unwrap()
-        .run();
-        thread::park();
-    });
-
-    ctrlc::set_handler(|| {
-        println!("Stopping...");
-        process::exit(0);
-    }).expect("Error setting Ctrl-C handler");
-
-    println!("Starting to serve GRPC on {}", addr);
-    let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
-    health_reporter
-        .set_serving::<DetectorServer<MyDetector>>()
-        .await;
-    
-
-    Server::builder()
-        .add_service(health_service)
-        .add_service(DetectorServer::new(detector))
-        .serve(addr)
-        .await?;
-    Ok(())
 }
